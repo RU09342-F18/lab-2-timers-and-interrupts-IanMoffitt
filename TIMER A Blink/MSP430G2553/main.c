@@ -75,10 +75,9 @@ int main(void)
     P1DIR = 0b01000001;
     P1OUT = 0x00;
 
-    //Here I am configuring the timer
-    //This macro configured the timer to be in capture compare interrupt
-
-    TA0CCTL0 = CCIE;
+    //Enable interrupts on CCR1 and CCR2
+    TA0CCTL1 = CCIE;
+    TA0CCTL2 = CCIE;
 
     //The timer register "TAxCTL" is where all of the information for configuring the timer is. TASSEL is a macro for enabling the
     //clock to be controlled by a clock, since TASSEL_1 is chosen it is configured by the ACLK.
@@ -86,8 +85,8 @@ int main(void)
     //MC_1 is up mode for the counter
     //TAIE is a macro that enables the timer interrupt
     //ID sets the internal divider
-    //ID_0 sets the internal divider to 1, so no divider is occurring
-    TA0CTL = TASSEL_1 + MC_1 + ID_0;
+    //ID_0 sets the internal divider to 1, so no division is occurring
+    TA0CTL = TASSEL_1 + MC_1 + TAIE + ID_0;
 
     //Calling upon the function to configure the CCR0 Frequency (Check TimerConfig for how this works)
     //TA0CCR0 = TimerConfig(0, 5, 1, 'A');
@@ -102,7 +101,7 @@ int main(void)
     TA0CCR2 = 30000;
 
     //Global interrupt is enabled
-    __enable_interrupt();
+    __bis_SR_register(GIE);
 
     //An infinite loop, the interrupt will control everything after it everything is configured
     while(1)
@@ -138,3 +137,4 @@ __interrupt void Timer_A(void)
     }
 
 }
+
