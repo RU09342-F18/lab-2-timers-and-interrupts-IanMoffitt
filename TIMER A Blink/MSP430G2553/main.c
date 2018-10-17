@@ -75,9 +75,8 @@ int main(void)
     P1DIR = 0b01000001;
     P1OUT = 0x00;
 
-    //Enable interrupts on CCR1 and CCR2
-    TA0CCTL1 = CCIE;
-    TA0CCTL2 = CCIE;
+    //Allows the AClock to the internal clock
+    BCSCTL3 = LFXT1S_2;
 
     //The timer register "TAxCTL" is where all of the information for configuring the timer is. TASSEL is a macro for enabling the
     //clock to be controlled by a clock, since TASSEL_1 is chosen it is configured by the ACLK.
@@ -86,7 +85,11 @@ int main(void)
     //TAIE is a macro that enables the timer interrupt
     //ID sets the internal divider
     //ID_0 sets the internal divider to 1, so no division is occurring
-    TA0CTL = TASSEL_1 + MC_1 + TAIE + ID_0;
+    TA0CTL = TASSEL_1 + MC_1 + TAIE + TACLR;
+
+    //Set the output mode of the register along with enabling interrupts on each CCR value
+    TA0CCTL1 = OUTMOD_4 + CCIE;
+    TA0CCTL2 = OUTMOD_4 + CCIE;
 
     //Calling upon the function to configure the CCR0 Frequency (Check TimerConfig for how this works)
     //TA0CCR0 = TimerConfig(0, 5, 1, 'A');
@@ -113,28 +116,25 @@ the interrupt vector is set, it runs the code and toggles the LED after a quarte
 As stated before the code runs every quarter of the frequency desired, so CCR0 is actually divided out of the function
 */
 
-//There are two interrupt vectors that each trigger one of the bits to be toggled,
-
-
-#pragma vector = TIMER0_A0_VECTOR
+//An interrupt vector is generated depending on which source it comes from
+//TA0IV is the interrupt vector
+#pragma vector = TIMER0_A1_VECTOR
 __interrupt void Timer_A(void)
 {
-    //This line of toggles the state of both the
     switch (TA0IV)
     {
         //This interrupt triggers when CCR1 is reached
         //Toggles both LEDs when CCR1 is reached
         case 0x02:
             P1OUT ^= 0x01;
+            TA0IV = 0x0000;
         break;
 
         //This interrupt triggers when CCR2 is reached
         //Toggles one LED when CCR2 is reached
         case 0x04:
             P1OUT ^= 0x40;
+            TA0IV = 0x0000;
         break;
-
     }
-
 }
-
